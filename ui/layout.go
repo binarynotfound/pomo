@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Bahaaio/pomo/ui/ascii"
-	"github.com/Bahaaio/pomo/ui/colors"
+	"github.com/binarynotfound/pomo/ui/ascii"
+	"github.com/binarynotfound/pomo/ui/colors"
 	"github.com/charmbracelet/lipgloss"
 )
 

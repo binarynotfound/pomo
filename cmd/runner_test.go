@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Bahaaio/pomo/config"
+	"github.com/binarynotfound/pomo/config"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )

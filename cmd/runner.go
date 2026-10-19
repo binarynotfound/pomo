@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/Bahaaio/pomo/config"
-	"github.com/Bahaaio/pomo/ui"
+	"github.com/binarynotfound/pomo/config"
+	"github.com/binarynotfound/pomo/ui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )

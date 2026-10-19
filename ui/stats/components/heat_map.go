@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Bahaaio/pomo/db"
-	"github.com/Bahaaio/pomo/ui/colors"
+	"github.com/binarynotfound/pomo/db"
+	"github.com/binarynotfound/pomo/ui/colors"
 	"github.com/charmbracelet/lipgloss"
 )
 

@@ -42,7 +42,7 @@
 
             meta = with pkgs.lib; {
               description = "Customizable TUI Pomodoro timer with ASCII art, progress bar, desktop notifications, and productivity statistics";
-              homepage = "https://github.com/Bahaaio/pomo";
+              homepage = "https://github.com/binarynotfound/pomo";
               license = licenses.mit;
               platforms = platforms.linux ++ platforms.darwin;
               mainProgram = "pomo";

@@ -4,7 +4,7 @@ package confirm
 import (
 	"time"
 
-	"github.com/Bahaaio/pomo/ui/colors"
+	"github.com/binarynotfound/pomo/ui/colors"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"

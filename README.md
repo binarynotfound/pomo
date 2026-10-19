@@ -2,8 +2,8 @@
 
 ![Demo](https://raw.githubusercontent.com/Bahaaio/pomo/main/.github/assets/pomo.gif)
 
-[![Latest Release](https://img.shields.io/github/release/Bahaaio/pomo.svg)](https://github.com/Bahaaio/pomo/releases/latest)
-![Build Status](https://github.com/Bahaaio/pomo/actions/workflows/build.yml/badge.svg)
+[![Latest Release](https://img.shields.io/github/release/Bahaaio/pomo.svg)](https://github.com/binarynotfound/pomo/releases/latest)
+![Build Status](https://github.com/binarynotfound/pomo/actions/workflows/build.yml/badge.svg)
 
 A simple, customizable Pomodoro timer for your terminal, built with [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
@@ -118,12 +118,12 @@ winget install Bahaaio.pomo
 ### Go
 
 ```bash
-go install github.com/Bahaaio/pomo@latest
+go install github.com/binarynotfound/pomo@latest
 ```
 
 ### Pre-built Binaries
 
-Download pre-built binaries from the [releases page](https://github.com/Bahaaio/pomo/releases/latest).
+Download pre-built binaries from the [releases page](https://github.com/binarynotfound/pomo/releases/latest).
 
 ### Nix
 
@@ -136,7 +136,7 @@ In your `flake.nix`:
 
 ```nix
 pomo = {
-  url = "github:Bahaaio/pomo";
+  url = "github:binarynotfound/pomo";
   inputs.nixpkgs.follows = "nixpkgs";
 };
 ```
@@ -152,7 +152,7 @@ environment.systemPackages = with pkgs; [
 **Option 2: Run directly**
 
 ```bash
-nix run github:Bahaaio/pomo
+nix run github:binarynotfound/pomo
 ```
 
 </details>
@@ -160,7 +160,7 @@ nix run github:Bahaaio/pomo
 ### Build from Source
 
 ```bash
-git clone https://github.com/Bahaaio/pomo
+git clone https://github.com/binarynotfound/pomo
 cd pomo
 go build .
 ```

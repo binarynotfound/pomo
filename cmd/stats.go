@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/Bahaaio/pomo/ui/stats"
+	"github.com/binarynotfound/pomo/ui/stats"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )

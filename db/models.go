@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"github.com/Bahaaio/pomo/config"
+	"github.com/binarynotfound/pomo/config"
 )
 
 var schema = `

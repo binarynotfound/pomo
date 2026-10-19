@@ -3,7 +3,7 @@ package components
 import (
 	"fmt"
 
-	"github.com/Bahaaio/pomo/db"
+	"github.com/binarynotfound/pomo/db"
 )
 
 type Streak struct{}

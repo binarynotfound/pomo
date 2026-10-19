@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/Bahaaio/pomo/config"
+	"github.com/binarynotfound/pomo/config"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )

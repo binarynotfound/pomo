@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Bahaaio/pomo/db"
+	"github.com/binarynotfound/pomo/db"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"

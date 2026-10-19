@@ -67,7 +67,7 @@ homebrew_casks:
     repository:
       owner: Bahaaio
       name: homebrew-pomo
-    homepage: https://github.com/Bahaaio/pomo
+    homepage: https://github.com/binarynotfound/pomo
     description: A simple Pomodoro timer TUI application written in Go.
     license: MIT
 
@@ -98,7 +98,7 @@ winget:
 nfpms:
   - maintainer: Bahaa Mohamed <bahaa-dev@proton.me>
     description: A simple Pomodoro timer TUI application written in Go.
-    homepage: https://github.com/Bahaaio/pomo
+    homepage: https://github.com/binarynotfound/pomo
     license: MIT
     formats:
       - deb
@@ -114,7 +114,7 @@ release:
 
     ### Go
     ```bash
-    go install github.com/Bahaaio/pomo@latest
+    go install github.com/binarynotfound/pomo@latest
     ```
 
     ### Download Binary

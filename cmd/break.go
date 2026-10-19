@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/Bahaaio/pomo/config"
+	"github.com/binarynotfound/pomo/config"
 	"github.com/spf13/cobra"
 )
 

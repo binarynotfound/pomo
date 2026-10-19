@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Bahaaio/pomo/cmd"
+	"github.com/binarynotfound/pomo/cmd"
 )
 
 func main() {

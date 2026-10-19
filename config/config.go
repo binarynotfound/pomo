@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Bahaaio/pomo/ui/ascii"
-	"github.com/Bahaaio/pomo/ui/colors"
+	"github.com/binarynotfound/pomo/ui/ascii"
+	"github.com/binarynotfound/pomo/ui/colors"
 	"github.com/spf13/viper"
 )
 
