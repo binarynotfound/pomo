@@ -84,6 +84,14 @@ func (m *Model) Reset(showShortSession bool) {
 }
 
 func (m Model) View(prompt string, idleDuration time.Duration) string {
+	idle := ""
+	if idleDuration.Seconds() > 0 {
+		idle = "idle for " + idleDuration.String()
+	}
+	return m.ViewWithHeader("", prompt, idle)
+}
+
+func (m Model) ViewWithHeader(header, prompt, subtitle string) string {
 	if m.quitting {
 		return ""
 	}
@@ -104,9 +112,9 @@ func (m Model) View(prompt string, idleDuration time.Duration) string {
 	dialog := lipgloss.JoinVertical(lipgloss.Center, prompt, "\n", buttons)
 	ui := borderStyle.Render(dialog)
 
-	idle := ""
-	if idleDuration.Seconds() > 0 {
-		idle = idleStyle.Render("idle for " + idleDuration.String())
+	sub := ""
+	if subtitle != "" {
+		sub = idleStyle.Render(subtitle)
 	}
 
 	km := Keys
@@ -115,16 +123,18 @@ func (m Model) View(prompt string, idleDuration time.Duration) string {
 	}
 	help := m.help.View(km)
 
+	var parts []string
+	if header != "" {
+		parts = append(parts, header, "")
+	}
+	parts = append(parts, ui, "", sub, "", help)
+
 	return lipgloss.Place(
 		m.width, m.height,
 		lipgloss.Center, lipgloss.Center,
 		lipgloss.JoinVertical(
 			lipgloss.Center,
-			ui,
-			"",
-			idle,
-			"",
-			help,
+			parts...,
 		),
 	)
 }

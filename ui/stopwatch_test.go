@@ -211,14 +211,37 @@ func TestOnlyWorkSessionsSavedToDB(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, sessions)
 
-	// Work session in pomodoro mode SHOULD be saved to DB
+	// Work session completion counts up extra time and saves work + extra time when starting break or exiting
 	workModel := NewModel(config.WorkTask, cfg)
 	workModel.repo = repo
 	workModel.elapsed = 25 * time.Minute
-	workModel.recordSession()
+	_ = workModel.handleCompletion()
 
+	// Not saved to DB yet while counting up extra time
+	assert.Equal(t, ShowingConfirm, workModel.sessionState)
+	assert.Equal(t, ConfirmNextSession, workModel.confirmAction)
+	sessions, err = repo.GetAllSessions()
+	require.NoError(t, err)
+	assert.Empty(t, sessions)
+
+	// Simulate 8 seconds of extra time after work session ended
+	workModel.confirmStartTime = time.Now().Add(-8 * time.Second)
+	assert.Equal(t, "00:08", workModel.buildTimeLeft())
+	assert.Contains(t, workModel.View(), "done! (+8s)")
+	assert.Contains(t, workModel.View(), "extra time: +8s (total: 25m8s)")
+
+	// User confirms starting break ('y') -> saves 25m8s to DB and transitions to BreakTask
+	cmd := workModel.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	if cmd != nil {
+		msg := cmd()
+		updated, _ := workModel.Update(msg)
+		workModel = updated.(Model)
+	}
+
+	assert.Equal(t, config.BreakTask, workModel.currentTaskType)
 	sessions, err = repo.GetAllSessions()
 	require.NoError(t, err)
 	require.Len(t, sessions, 1)
 	assert.Equal(t, "work", sessions[0].Type)
+	assert.Equal(t, 25*time.Minute+8*time.Second, sessions[0].Duration)
 }

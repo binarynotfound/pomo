@@ -148,6 +148,13 @@ func (m *Model) handleConfirmChoice(msg confirm.ChoiceMsg) tea.Cmd {
 		return m.resumeFromConfirm()
 
 	default:
+		if m.currentTaskType == config.WorkTask {
+			extra := time.Since(m.confirmStartTime).Truncate(time.Second)
+			if extra > 0 {
+				m.elapsed += extra
+			}
+			m.recordSession()
+		}
 		switch msg.Choice {
 		case confirm.Confirm:
 			return m.nextSession()
@@ -272,8 +279,6 @@ func (m Model) getPercent() float64 {
 func (m *Model) handleCompletion() tea.Cmd {
 	log.Println("timer completed")
 
-	m.recordSession()
-
 	ctx, cancel := context.WithTimeout(context.Background(), actions.CommandTimeout)
 	m.commandsCancel = cancel
 	m.commandsWg = actions.RunPostActions(ctx, m.currentTask)
@@ -288,7 +293,27 @@ func (m *Model) handleCompletion() tea.Cmd {
 		}
 	}
 
-	// continue after the completion according to config
+	// after a pomodoro work session ends, count up extra time until the user
+	// starts the break or exits, and save that extra time with the work session
+	if m.currentTaskType == config.WorkTask {
+		if m.onSessionEnd == "quit" {
+			m.recordSession()
+			return m.Quit()
+		}
+
+		m.confirmAction = ConfirmNextSession
+		m.confirmDialog.Reset(true)
+		m.sessionState = ShowingConfirm
+		m.confirmStartTime = time.Now()
+
+		return func() tea.Msg {
+			return confirmTickMsg{}
+		}
+	}
+
+	m.recordSession()
+
+	// continue after break completion according to config
 	switch m.onSessionEnd {
 	case "ask":
 		m.confirmAction = ConfirmNextSession

@@ -25,7 +25,7 @@ func (m *Model) buildConfirmDialogView() string {
 	case ConfirmQuit:
 		return m.confirmDialog.View("quit session?", 0)
 	default:
-		idle := time.Since(m.confirmStartTime).Truncate(time.Second)
+		extra := time.Since(m.confirmStartTime).Truncate(time.Second)
 		title := m.currentTaskType.Opposite().GetTask().Title
 
 		// if we're prompting to start a long break
@@ -33,7 +33,14 @@ func (m *Model) buildConfirmDialogView() string {
 			title = "long " + title
 		}
 
-		return m.confirmDialog.View("start "+title+"?", time.Duration(idle))
+		if m.isPostWorkConfirm() {
+			header := m.buildMainContent() + m.buildStatusIndicators()
+			total := (m.elapsed + extra).Round(time.Second)
+			subtitle := fmt.Sprintf("extra time: +%s (total: %s)", extra, total)
+			return m.confirmDialog.ViewWithHeader(header, "start "+title+"?", subtitle)
+		}
+
+		return m.confirmDialog.View("start "+title+"?", time.Duration(extra))
 	}
 }
 
@@ -45,7 +52,7 @@ func (m *Model) buildMainContent() string {
 	}
 
 	content := m.currentTask.Title
-	if m.isStopwatch() || m.sessionState == RestCompleted || !m.timer.Timedout() {
+	if m.isStopwatch() || m.sessionState == RestCompleted || m.isPostWorkConfirm() || !m.timer.Timedout() {
 		content += separator + timeLeft
 	}
 
@@ -53,7 +60,7 @@ func (m *Model) buildMainContent() string {
 }
 
 func (m *Model) buildStatusIndicators() string {
-	if m.sessionState == RestCompleted {
+	if m.sessionState == RestCompleted || m.isPostWorkConfirm() {
 		extra := time.Since(m.confirmStartTime).Truncate(time.Second)
 		if extra > 0 {
 			return separator + completedIndicator + fmt.Sprintf(" (+%s)", extra)
@@ -87,7 +94,7 @@ func (m *Model) buildTimeLeft() string {
 	left := m.timer.Timeout
 	if m.isStopwatch() {
 		left = m.elapsed
-	} else if m.sessionState == RestCompleted {
+	} else if m.sessionState == RestCompleted || m.isPostWorkConfirm() {
 		left = time.Since(m.confirmStartTime).Truncate(time.Second)
 	}
 	hours := int(left.Hours())

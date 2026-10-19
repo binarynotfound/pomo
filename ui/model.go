@@ -140,3 +140,9 @@ func (m Model) isStopwatch() bool {
 func (m Model) isRest() bool {
 	return m.currentTaskType == config.RestTask
 }
+
+func (m Model) isPostWorkConfirm() bool {
+	return m.sessionState == ShowingConfirm &&
+		m.confirmAction == ConfirmNextSession &&
+		m.currentTaskType == config.WorkTask
+}
