@@ -146,3 +146,44 @@ func TestStatsViewsAndNavigation(t *testing.T) {
 	assert.False(t, m.confirmingDelete)
 	assert.Nil(t, m.deleteTargetIDs)
 }
+
+func TestOverviewBarChartByTitle(t *testing.T) {
+	m := New()
+	m.width = 120
+	m.height = 40
+	m.weeklyStats = []db.DailyStat{
+		{Date: "2026-10-18", WorkDuration: 30 * time.Minute},
+		{Date: "2026-10-19", WorkDuration: 75 * time.Minute},
+	}
+
+	// Without custom titles (only default "work session"), renders plain chart without title legend
+	m.weeklyTitleStats = []db.DailyTitleStat{
+		{Date: "2026-10-18", Title: "work session", WorkDuration: 30 * time.Minute},
+		{Date: "2026-10-19", Title: "work session", WorkDuration: 75 * time.Minute},
+	}
+	plainView := m.View()
+	assert.NotContains(t, plainView, "██ work session")
+
+	// With custom titles (-t), renders chart grouped by title with color legend by default
+	m.weeklyTitleStats = []db.DailyTitleStat{
+		{Date: "2026-10-18", Title: "backend", WorkDuration: 30 * time.Minute},
+		{Date: "2026-10-19", Title: "backend", WorkDuration: 45 * time.Minute},
+		{Date: "2026-10-19", Title: "frontend", WorkDuration: 30 * time.Minute},
+	}
+	groupedView := m.View()
+	assert.Contains(t, groupedView, "backend")
+	assert.Contains(t, groupedView, "frontend")
+
+	// Cycling with Down ('j') on Overview filters by individual title
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	m = updated.(Model)
+	assert.Equal(t, 1, m.selectedTitleIdx)
+
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	m = updated.(Model)
+	assert.Equal(t, 2, m.selectedTitleIdx)
+
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	m = updated.(Model)
+	assert.Equal(t, 0, m.selectedTitleIdx)
+}

@@ -91,6 +91,15 @@ var OverviewKeys = KeyMap{
 	Quit:    Keys.Quit,
 }
 
+var OverviewTitleKeys = KeyMap{
+	NextTab: Keys.NextTab,
+	Up: key.NewBinding(
+		key.WithKeys("up", "k", "down", "j"),
+		key.WithHelp("↑/↓", "filter title"),
+	),
+	Quit: Keys.Quit,
+}
+
 var SessionsKeys = KeyMap{
 	NextTab: Keys.NextTab,
 	Up:      Keys.Up,

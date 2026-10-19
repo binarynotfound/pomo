@@ -35,15 +35,17 @@ type Model struct {
 	err error
 
 	// stats
-	allTimeStats db.AllTimeStats
-	weeklyStats  []db.DailyStat
-	monthlyStats []db.DailyStat
-	streakStats  db.StreakStats
-	sessions     []db.Session
+	allTimeStats     db.AllTimeStats
+	weeklyStats      []db.DailyStat
+	weeklyTitleStats []db.DailyTitleStat
+	monthlyStats     []db.DailyStat
+	streakStats      db.StreakStats
+	sessions         []db.Session
 
 	// navigation & view state
 	activeTab        Tab
 	cursor           int
+	selectedTitleIdx int // 0 = all titles grouped, 1..N = specific title in Overview
 	collapsedTitles  map[string]bool
 	collapsedDates   map[string]bool
 	confirmingDelete bool
@@ -70,11 +72,12 @@ func New() Model {
 }
 
 type statsMsg struct {
-	allTimeStats db.AllTimeStats
-	weeklyStats  []db.DailyStat
-	monthlyStats []db.DailyStat
-	streakStats  db.StreakStats
-	sessions     []db.Session
+	allTimeStats     db.AllTimeStats
+	weeklyStats      []db.DailyStat
+	weeklyTitleStats []db.DailyTitleStat
+	monthlyStats     []db.DailyStat
+	streakStats      db.StreakStats
+	sessions         []db.Session
 }
 
 type errMsg struct {
@@ -102,6 +105,11 @@ func fetchStats() tea.Msg {
 		return errMsg{err: errors.New("failed to fetch weekly stats")}
 	}
 
+	weeklyTitleStats, err := repo.GetWeeklyTitleStats()
+	if err != nil {
+		return errMsg{err: errors.New("failed to fetch weekly title stats")}
+	}
+
 	monthlyStats, err := repo.GetLastMonthsStats(components.NumberOfMonths)
 	if err != nil {
 		return errMsg{err: errors.New("failed to fetch heatmap stats")}
@@ -118,11 +126,12 @@ func fetchStats() tea.Msg {
 	}
 
 	return statsMsg{
-		allTimeStats: stats,
-		weeklyStats:  weeklyStats,
-		monthlyStats: monthlyStats,
-		streakStats:  streakStats,
-		sessions:     sessions,
+		allTimeStats:     stats,
+		weeklyStats:      weeklyStats,
+		weeklyTitleStats: weeklyTitleStats,
+		monthlyStats:     monthlyStats,
+		streakStats:      streakStats,
+		sessions:         sessions,
 	}
 }
 
@@ -172,9 +181,16 @@ func (m Model) View() string {
 			m.allTimeStats.TotalBreakDuration,
 		)
 		streak := m.streak.View(m.streakStats)
-		chart := m.barChart.View(m.weeklyStats)
+
+		selectedTitle := ""
+		titles := components.ExtractTitles(m.weeklyTitleStats)
+		if m.selectedTitleIdx > 0 && m.selectedTitleIdx <= len(titles) {
+			selectedTitle = titles[m.selectedTitleIdx-1]
+		}
+
+		chart := m.barChart.ViewWithTitles(m.weeklyStats, m.weeklyTitleStats, selectedTitle)
 		hMap := m.heatMap.View(m.monthlyStats)
-		charts := lipgloss.JoinHorizontal(lipgloss.Bottom, chart, "   ", hMap)
+		charts := lipgloss.JoinHorizontal(lipgloss.Top, chart, "   ", hMap)
 
 		body = lipgloss.JoinVertical(
 			lipgloss.Center,
@@ -184,7 +200,11 @@ func (m Model) View() string {
 			"\n",
 			charts,
 		)
-		helpView = m.help.View(OverviewKeys)
+		if components.HasTitledData(m.weeklyTitleStats) {
+			helpView = m.help.View(OverviewTitleKeys)
+		} else {
+			helpView = m.help.View(OverviewKeys)
+		}
 
 	case TabSessions:
 		body = m.renderListView()
@@ -216,6 +236,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case statsMsg:
 		m.allTimeStats = msg.allTimeStats
 		m.weeklyStats = msg.weeklyStats
+		m.weeklyTitleStats = msg.weeklyTitleStats
 		m.monthlyStats = msg.monthlyStats
 		m.streakStats = msg.streakStats
 		m.sessions = msg.sessions
@@ -312,17 +333,29 @@ func (m Model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case key.Matches(msg, Keys.Up):
-		if m.activeTab != TabOverview && m.cursor > 0 {
+		if m.activeTab == TabOverview {
+			if components.HasTitledData(m.weeklyTitleStats) {
+				total := len(components.ExtractTitles(m.weeklyTitleStats)) + 1
+				m.selectedTitleIdx = (m.selectedTitleIdx - 1 + total) % total
+			}
+			return m, nil
+		}
+		if m.cursor > 0 {
 			m.cursor--
 		}
 		return m, nil
 
 	case key.Matches(msg, Keys.Down):
-		if m.activeTab != TabOverview {
-			items := m.buildItems()
-			if m.cursor < len(items)-1 {
-				m.cursor++
+		if m.activeTab == TabOverview {
+			if components.HasTitledData(m.weeklyTitleStats) {
+				total := len(components.ExtractTitles(m.weeklyTitleStats)) + 1
+				m.selectedTitleIdx = (m.selectedTitleIdx + 1) % total
 			}
+			return m, nil
+		}
+		items := m.buildItems()
+		if m.cursor < len(items)-1 {
+			m.cursor++
 		}
 		return m, nil
 

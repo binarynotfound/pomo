@@ -106,6 +106,37 @@ func (r *SessionRepo) GetWeeklyStats() ([]DailyStat, error) {
 	return r.getDailyStats(firstDay, today)
 }
 
+// GetWeeklyTitleStats retrieves daily work duration statistics grouped by day and title for the past 7 days.
+func (r *SessionRepo) GetWeeklyTitleStats() ([]DailyTitleStat, error) {
+	today := time.Now()
+	firstDay := today.AddDate(0, 0, -6)
+
+	fromStr := firstDay.Format(DateFormat)
+	toStr := today.Format(DateFormat)
+
+	var stats []DailyTitleStat
+
+	if err := r.db.Select(
+		&stats,
+		`
+		SELECT
+			date(started_at) AS day,
+			COALESCE(title, '') AS title,
+			COALESCE(SUM(duration), 0) AS work_duration
+		FROM sessions
+		WHERE type = 'work'
+		  AND date(started_at) BETWEEN ? AND ?
+		GROUP BY day, title
+		ORDER BY day, work_duration DESC;
+		`,
+		fromStr, toStr,
+	); err != nil {
+		return nil, err
+	}
+
+	return stats, nil
+}
+
 // GetLastMonthsStats retrieves daily work duration statistics for the past specified number of months.
 func (r *SessionRepo) GetLastMonthsStats(numberOfMonths int) ([]DailyStat, error) {
 	today := time.Now()

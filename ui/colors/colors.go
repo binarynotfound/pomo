@@ -53,6 +53,27 @@ const (
 	ErrorMessageFg   = Red
 )
 
+// TitleColors provides distinct colors for grouping charts by session title.
+var TitleColors = []lipgloss.Color{
+	Purple,                    // #8860FF
+	Pink,                      // #F25D94
+	Blue,                      // #4A9EFF
+	Green,                     // #198754
+	lipgloss.Color("#FF9F43"), // Orange
+	lipgloss.Color("#00D2D3"), // Cyan
+	lipgloss.Color("#FECA57"), // Yellow
+	Red,                       // #FF4C4C
+	PurplePale,                // #C3A1FF
+}
+
+// GetTitleColor returns a distinct color from TitleColors for the given index.
+func GetTitleColor(index int) lipgloss.Color {
+	if len(TitleColors) == 0 {
+		return Purple
+	}
+	return TitleColors[index%len(TitleColors)]
+}
+
 var validColorRegex *regexp.Regexp = nil
 
 func init() {
