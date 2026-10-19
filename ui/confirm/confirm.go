@@ -62,17 +62,25 @@ type ChoiceMsg struct {
 }
 
 type Model struct {
-	confirmed     bool
-	width, height int
-	help          help.Model
-	quitting      bool
+	confirmed        bool
+	showShortSession bool
+	width, height    int
+	help             help.Model
+	quitting         bool
 }
 
 func New() Model {
 	return Model{
-		confirmed: true,
-		help:      help.New(),
+		confirmed:        true,
+		showShortSession: true,
+		help:             help.New(),
 	}
+}
+
+func (m *Model) Reset(showShortSession bool) {
+	m.confirmed = true
+	m.showShortSession = showShortSession
+	m.quitting = false
 }
 
 func (m Model) View(prompt string, idleDuration time.Duration) string {
@@ -101,7 +109,11 @@ func (m Model) View(prompt string, idleDuration time.Duration) string {
 		idle = idleStyle.Render("idle for " + idleDuration.String())
 	}
 
-	help := m.help.View(Keys)
+	km := Keys
+	if !m.showShortSession {
+		km.ShortSession.SetEnabled(false)
+	}
+	help := m.help.View(km)
 
 	return lipgloss.Place(
 		m.width, m.height,
@@ -135,11 +147,13 @@ func (m *Model) HandleKeys(msg tea.KeyMsg) tea.Cmd {
 		}
 		return m.Choice(Cancel)
 
-	case key.Matches(msg, Keys.ShortSession):
+	case m.showShortSession && key.Matches(msg, Keys.ShortSession):
 		return m.Choice(ShortSession)
 
 	case key.Matches(msg, Keys.Quit):
-		m.quitting = true
+		if m.showShortSession {
+			m.quitting = true
+		}
 		return m.Choice(Cancel)
 
 	default:

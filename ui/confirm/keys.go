@@ -14,6 +14,14 @@ type KeyMap struct {
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
+	if !k.ShortSession.Enabled() {
+		return []key.Binding{
+			k.Toggle,
+			k.Confirm,
+			k.Cancel,
+			k.Submit,
+		}
+	}
 	return []key.Binding{
 		k.Toggle,
 		k.Submit,
@@ -36,7 +44,7 @@ var Keys = KeyMap{
 		key.WithHelp("y", "confirm"),
 	),
 	Cancel: key.NewBinding(
-		key.WithKeys("n"),
+		key.WithKeys("n", "esc"),
 		key.WithHelp("n", "cancel"),
 	),
 	Submit: key.NewBinding(

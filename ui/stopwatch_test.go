@@ -55,10 +55,59 @@ func TestStopwatchModel(t *testing.T) {
 	_ = m.handleKeys(tea.KeyMsg{Type: tea.KeySpace})
 	assert.Equal(t, Running, m.sessionState)
 
-	// Reset should clear elapsed time
+	// Reset should prompt for confirmation first
 	_ = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
+	assert.Equal(t, ShowingConfirm, m.sessionState)
+	assert.Equal(t, ConfirmReset, m.confirmAction)
+	assert.Contains(t, m.View(), "reset session?")
+
+	// Canceling reset ('n') should preserve elapsed time and return to Running
+	cmd := m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	if cmd != nil {
+		msg := cmd()
+		updated, _ := m.Update(msg)
+		m = updated.(Model)
+	}
+	assert.Equal(t, Running, m.sessionState)
+	assert.Equal(t, "01:05:09", m.buildTimeLeft())
+
+	// Confirming reset ('h' then 'y') should clear elapsed time
+	_ = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
+	assert.Equal(t, ShowingConfirm, m.sessionState)
+	cmd = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	if cmd != nil {
+		msg := cmd()
+		updated, _ := m.Update(msg)
+		m = updated.(Model)
+	}
+	assert.Equal(t, Running, m.sessionState)
 	assert.Equal(t, time.Duration(0), m.elapsed)
 	assert.Equal(t, "00:00", m.buildTimeLeft())
+
+	// Quit should prompt for confirmation first
+	_ = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	assert.Equal(t, ShowingConfirm, m.sessionState)
+	assert.Equal(t, ConfirmQuit, m.confirmAction)
+	assert.Contains(t, m.View(), "quit session?")
+
+	// Canceling quit ('n') should return to Running
+	cmd = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	if cmd != nil {
+		msg := cmd()
+		updated, _ := m.Update(msg)
+		m = updated.(Model)
+	}
+	assert.Equal(t, Running, m.sessionState)
+
+	// Confirming quit ('q' then 'y') should transition to Quitting
+	_ = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	cmd = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	if cmd != nil {
+		msg := cmd()
+		updated, _ := m.Update(msg)
+		m = updated.(Model)
+	}
+	assert.Equal(t, Quitting, m.sessionState)
 
 	// Session type for DB should be WorkSession
 	assert.Equal(t, db.WorkSession, db.GetSessionType(config.StopwatchTask))
@@ -104,4 +153,17 @@ func TestRestModel(t *testing.T) {
 	m.confirmStartTime = time.Now().Add(-5 * time.Second)
 	assert.Equal(t, "00:05", m.buildTimeLeft())
 	assert.Contains(t, m.buildStatusIndicators(), "done! (+5s)")
+
+	// Reset in RestCompleted prompts for confirmation and restarts rest session on 'y'
+	_ = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
+	assert.Equal(t, ShowingConfirm, m.sessionState)
+	assert.Equal(t, ConfirmReset, m.confirmAction)
+	cmd := m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	if cmd != nil {
+		msg := cmd()
+		updated, _ := m.Update(msg)
+		m = updated.(Model)
+	}
+	assert.Equal(t, Running, m.sessionState)
+	assert.Equal(t, time.Duration(0), m.elapsed)
 }

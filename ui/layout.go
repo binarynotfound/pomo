@@ -19,15 +19,22 @@ const (
 )
 
 func (m *Model) buildConfirmDialogView() string {
-	idle := time.Since(m.confirmStartTime).Truncate(time.Second)
-	title := m.currentTaskType.Opposite().GetTask().Title
+	switch m.confirmAction {
+	case ConfirmReset:
+		return m.confirmDialog.View("reset session?", 0)
+	case ConfirmQuit:
+		return m.confirmDialog.View("quit session?", 0)
+	default:
+		idle := time.Since(m.confirmStartTime).Truncate(time.Second)
+		title := m.currentTaskType.Opposite().GetTask().Title
 
-	// if we're prompting to start a long break
-	if m.cyclePosition == m.longBreak.After {
-		title = "long " + title
+		// if we're prompting to start a long break
+		if m.cyclePosition == m.longBreak.After {
+			title = "long " + title
+		}
+
+		return m.confirmDialog.View("start "+title+"?", time.Duration(idle))
 	}
-
-	return m.confirmDialog.View("start "+title+"?", time.Duration(idle))
 }
 
 func (m *Model) buildMainContent() string {

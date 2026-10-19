@@ -53,6 +53,8 @@ type Model struct {
 	confirmDeleteYes bool
 	deleteTargetIDs  []int
 	deletePrompt     string
+	confirmingQuit   bool
+	confirmQuitYes   bool
 	editingTitle     bool
 	editTargetIDs    []int
 	editPrompt       string
@@ -187,6 +189,10 @@ func (m Model) View() string {
 		return m.buildErrorMessage()
 	}
 
+	if m.confirmingQuit {
+		return m.renderQuitConfirmView()
+	}
+
 	if m.confirmingDelete {
 		return m.renderDeleteConfirmView()
 	}
@@ -319,6 +325,10 @@ func (m *Model) buildErrorMessage() string {
 }
 
 func (m Model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.confirmingQuit {
+		return m.handleQuitConfirmKeys(msg)
+	}
+
 	if m.confirmingDelete {
 		return m.handleDeleteConfirmKeys(msg)
 	}
@@ -329,8 +339,13 @@ func (m Model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	switch {
 	case key.Matches(msg, Keys.Quit):
-		m.quitting = true
-		return m, tea.Quit
+		if m.err != nil {
+			m.quitting = true
+			return m, tea.Quit
+		}
+		m.confirmingQuit = true
+		m.confirmQuitYes = true
+		return m, nil
 
 	case key.Matches(msg, Keys.NextTab):
 		m.activeTab = (m.activeTab + 1) % totalTabs
@@ -542,8 +557,37 @@ func (m Model) handleDeleteConfirmKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case key.Matches(msg, Keys.Quit):
+		m.confirmingDelete = false
+		m.deleteTargetIDs = nil
+		return m, nil
+	}
+
+	return m, nil
+}
+
+func (m Model) handleQuitConfirmKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, Keys.Confirm):
+		m.confirmingQuit = false
 		m.quitting = true
 		return m, tea.Quit
+
+	case key.Matches(msg, Keys.Cancel):
+		m.confirmingQuit = false
+		return m, nil
+
+	case key.Matches(msg, ConfirmDeleteKeys.NextTab):
+		m.confirmQuitYes = !m.confirmQuitYes
+		return m, nil
+
+	case key.Matches(msg, ConfirmDeleteKeys.Toggle):
+		if m.confirmQuitYes {
+			m.confirmingQuit = false
+			m.quitting = true
+			return m, tea.Quit
+		}
+		m.confirmingQuit = false
+		return m, nil
 	}
 
 	return m, nil

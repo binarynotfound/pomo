@@ -35,6 +35,8 @@ type Model struct {
 	width, height    int // window dimensions
 	onSessionEnd     string
 	sessionState     SessionState
+	prevSessionState SessionState
+	confirmAction    ConfirmAction
 	confirmStartTime time.Time
 	currentTaskType  config.TaskType
 	currentTask      config.Task
@@ -117,6 +119,14 @@ const (
 	RestCompleted      // rest timer finished, counting up extra time
 	WaitingForCommands // waiting for post commands before quitting
 	Quitting
+)
+
+type ConfirmAction byte
+
+const (
+	ConfirmNextSession ConfirmAction = iota
+	ConfirmReset
+	ConfirmQuit
 )
 
 func (m Model) GetSessionSummary() summary.SessionSummary {

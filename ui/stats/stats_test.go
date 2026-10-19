@@ -178,6 +178,27 @@ func TestStatsViewsAndNavigation(t *testing.T) {
 	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	m = updated.(Model)
 	assert.False(t, m.editingTitle)
+
+	// Quit ('q') should ask for confirmation first
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	m = updated.(Model)
+	assert.True(t, m.confirmingQuit)
+	assert.False(t, m.quitting)
+	assert.Contains(t, m.View(), "Quit stats?")
+
+	// Cancel quit with 'n'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	m = updated.(Model)
+	assert.False(t, m.confirmingQuit)
+	assert.False(t, m.quitting)
+
+	// Confirm quit with 'q' then 'y'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	m = updated.(Model)
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	m = updated.(Model)
+	assert.False(t, m.confirmingQuit)
+	assert.True(t, m.quitting)
 }
 
 func TestOverviewBarChartByTitle(t *testing.T) {

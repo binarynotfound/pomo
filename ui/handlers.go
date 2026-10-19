@@ -72,15 +72,7 @@ func (m *Model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 		return nil
 
 	case key.Matches(msg, keyMap.Reset):
-		if m.sessionState == RestCompleted {
-			return m.startSession(m.currentTaskType, m.currentTask, false)
-		}
-		m.elapsed = 0
-		if m.isStopwatch() {
-			return m.stopwatch.Reset()
-		}
-		m.duration = m.currentTask.Duration
-		return m.updateProgressBar()
+		return m.promptConfirm(ConfirmReset)
 
 	case key.Matches(msg, keyMap.Skip):
 		if m.isStopwatch() || m.isRest() {
@@ -90,22 +82,80 @@ func (m *Model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 		return m.nextSession()
 
 	case key.Matches(msg, keyMap.Quit):
-		m.recordSession()
-		return m.Quit()
+		return m.promptConfirm(ConfirmQuit)
 
 	default:
 		return nil
 	}
 }
 
+func (m *Model) promptConfirm(action ConfirmAction) tea.Cmd {
+	m.prevSessionState = m.sessionState
+	m.confirmAction = action
+	m.sessionState = ShowingConfirm
+	m.confirmDialog.Reset(false)
+
+	if m.isStopwatch() && m.prevSessionState == Running {
+		return m.stopwatch.Stop()
+	}
+	return nil
+}
+
+func (m *Model) resumeFromConfirm() tea.Cmd {
+	m.sessionState = m.prevSessionState
+	if m.sessionState == RestCompleted {
+		return func() tea.Msg {
+			return confirmTickMsg{}
+		}
+	}
+	if m.sessionState == Running {
+		if m.isStopwatch() {
+			return m.stopwatch.Start()
+		}
+		return m.timer.Start()
+	}
+	return nil
+}
+
 func (m *Model) handleConfirmChoice(msg confirm.ChoiceMsg) tea.Cmd {
-	switch msg.Choice {
-	case confirm.Confirm:
-		return m.nextSession()
-	case confirm.ShortSession:
-		return m.shortSession()
-	case confirm.Cancel:
-		return m.Quit()
+	switch m.confirmAction {
+	case ConfirmReset:
+		if msg.Choice == confirm.Confirm {
+			if m.prevSessionState == RestCompleted {
+				return m.startSession(m.currentTaskType, m.currentTask, false)
+			}
+			m.sessionState = m.prevSessionState
+			m.elapsed = 0
+			if m.isStopwatch() {
+				if m.sessionState == Running {
+					return tea.Batch(m.stopwatch.Reset(), m.stopwatch.Start())
+				}
+				return m.stopwatch.Reset()
+			}
+			m.duration = m.currentTask.Duration
+			if m.sessionState == Running {
+				return tea.Batch(m.updateProgressBar(), m.timer.Start())
+			}
+			return m.updateProgressBar()
+		}
+		return m.resumeFromConfirm()
+
+	case ConfirmQuit:
+		if msg.Choice == confirm.Confirm {
+			m.recordSession()
+			return m.Quit()
+		}
+		return m.resumeFromConfirm()
+
+	default:
+		switch msg.Choice {
+		case confirm.Confirm:
+			return m.nextSession()
+		case confirm.ShortSession:
+			return m.shortSession()
+		case confirm.Cancel:
+			return m.Quit()
+		}
 	}
 
 	return nil
@@ -122,7 +172,7 @@ func (m *Model) handleWindowResize(msg tea.WindowSizeMsg) tea.Cmd {
 }
 
 func (m *Model) handleTimerTick(msg timer.TickMsg) tea.Cmd {
-	if m.sessionState == Paused {
+	if m.sessionState != Running {
 		return nil
 	}
 
@@ -148,7 +198,7 @@ func (m *Model) handleTimerTick(msg timer.TickMsg) tea.Cmd {
 }
 
 func (m *Model) handleStopwatchTick(msg stopwatch.TickMsg) tea.Cmd {
-	if m.sessionState == Paused {
+	if m.sessionState != Running {
 		return nil
 	}
 
@@ -173,7 +223,7 @@ func (m *Model) handleStopwatchMsg(msg tea.Msg) tea.Cmd {
 }
 
 func (m *Model) handleConfirmTick() tea.Cmd {
-	if m.sessionState != ShowingConfirm && m.sessionState != RestCompleted {
+	if (m.sessionState != ShowingConfirm || m.confirmAction != ConfirmNextSession) && m.sessionState != RestCompleted {
 		return nil
 	}
 
@@ -241,6 +291,8 @@ func (m *Model) handleCompletion() tea.Cmd {
 	// continue after the completion according to config
 	switch m.onSessionEnd {
 	case "ask":
+		m.confirmAction = ConfirmNextSession
+		m.confirmDialog.Reset(true)
 		m.sessionState = ShowingConfirm
 		m.confirmStartTime = time.Now()
 

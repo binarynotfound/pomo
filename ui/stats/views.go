@@ -343,8 +343,16 @@ func (m Model) formatItemRow(item selectableItem, selected bool) string {
 }
 
 func (m Model) renderDeleteConfirmView() string {
+	return m.renderConfirmBox(m.deletePrompt, m.confirmDeleteYes)
+}
+
+func (m Model) renderQuitConfirmView() string {
+	return m.renderConfirmBox("Quit stats?", m.confirmQuitYes)
+}
+
+func (m Model) renderConfirmBox(prompt string, yesSelected bool) string {
 	var yesBtn, noBtn string
-	if m.confirmDeleteYes {
+	if yesSelected {
 		yesBtn = activeBtnStyle.Render("Yes")
 		noBtn = inactiveBtnStyle.Render("No")
 	} else {
@@ -356,7 +364,7 @@ func (m Model) renderDeleteConfirmView() string {
 	dialog := confirmBorderStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Center,
-			lipgloss.NewStyle().Bold(true).Render(m.deletePrompt),
+			lipgloss.NewStyle().Bold(true).Render(prompt),
 			"",
 			buttons,
 		),
