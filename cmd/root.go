@@ -29,7 +29,8 @@ The Pomodoro timer shows a progress bar and sends desktop notifications when com
   pomo 45m 15m                  # Start 45 minute work session with 15 minute break
   pomo -t "write report"        # Work session with custom title (or --title)
   pomo stopwatch                # Start a stopwatch session
-  pomo stopwatch -t "deep work" # Stopwatch session with custom title`,
+  pomo stopwatch -t "deep work" # Stopwatch session with custom title
+  pomo rest 10m                 # Start a standalone 10 minute rest session`,
 
 	Args: cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {

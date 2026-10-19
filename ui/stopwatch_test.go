@@ -63,3 +63,45 @@ func TestStopwatchModel(t *testing.T) {
 	// Session type for DB should be WorkSession
 	assert.Equal(t, db.WorkSession, db.GetSessionType(config.StopwatchTask))
 }
+
+func TestRestModel(t *testing.T) {
+	cfg := config.Config{
+		Break: config.Task{
+			Title:    "rest session",
+			Duration: 10 * time.Minute,
+			Notification: config.Notification{
+				Enabled: false,
+			},
+		},
+		ASCIIArt: config.ASCIIArt{
+			Enabled: false,
+		},
+		LongBreak: config.LongBreak{
+			Enabled: true,
+			After:   4,
+		},
+	}
+
+	config.C = cfg
+	m := NewModel(config.RestTask, cfg)
+	m.repo = nil
+
+	assert.True(t, m.isRest())
+	assert.Equal(t, Running, m.sessionState)
+	assert.Equal(t, "10:00", m.buildTimeLeft())
+	assert.Equal(t, "", m.buildStatusIndicators()) // no cycle indicator for rest
+
+	// Skip should be ignored in rest mode
+	_ = m.handleKeys(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	assert.Equal(t, config.RestTask, m.currentTaskType)
+
+	// Simulate completion of rest timer
+	m.elapsed = 10 * time.Minute
+	_ = m.handleCompletion()
+	assert.Equal(t, RestCompleted, m.sessionState)
+
+	// Simulate 5 seconds of extra time after rest ends
+	m.confirmStartTime = time.Now().Add(-5 * time.Second)
+	assert.Equal(t, "00:05", m.buildTimeLeft())
+	assert.Contains(t, m.buildStatusIndicators(), "done! (+5s)")
+}

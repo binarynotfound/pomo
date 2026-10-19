@@ -86,6 +86,13 @@ pomo break              # break session
 pomo break 10m          # 10m break session
 ```
 
+Rest sessions (standalone break not saved to DB, counts up extra time when finished):
+
+```bash
+pomo rest               # standalone rest session
+pomo rest 10m           # 10m standalone rest session
+```
+
 View statistics:
 
 ```bash

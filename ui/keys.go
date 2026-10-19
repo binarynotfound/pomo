@@ -54,3 +54,10 @@ var stopwatchKeyMap = KeyMap{
 	Reset: keyMap.Reset,
 	Quit:  keyMap.Quit,
 }
+
+var restKeyMap = KeyMap{
+	Increase: keyMap.Increase,
+	Pause:    keyMap.Pause,
+	Reset:    keyMap.Reset,
+	Quit:     keyMap.Quit,
+}

@@ -39,13 +39,17 @@ func (m *Model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 
 	switch {
 	case key.Matches(msg, keyMap.Increase):
-		if m.isStopwatch() {
+		if m.isStopwatch() || m.sessionState == RestCompleted {
 			return nil
 		}
 		m.duration += time.Minute
 		return m.updateProgressBar()
 
 	case key.Matches(msg, keyMap.Pause):
+		if m.sessionState == RestCompleted {
+			return nil
+		}
+
 		if m.isStopwatch() {
 			if m.sessionState == Paused {
 				m.sessionState = Running
@@ -68,6 +72,9 @@ func (m *Model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 		return nil
 
 	case key.Matches(msg, keyMap.Reset):
+		if m.sessionState == RestCompleted {
+			return m.startSession(m.currentTaskType, m.currentTask, false)
+		}
 		m.elapsed = 0
 		if m.isStopwatch() {
 			return m.stopwatch.Reset()
@@ -76,7 +83,7 @@ func (m *Model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 		return m.updateProgressBar()
 
 	case key.Matches(msg, keyMap.Skip):
-		if m.isStopwatch() {
+		if m.isStopwatch() || m.isRest() {
 			return nil
 		}
 		m.recordSession()
@@ -166,11 +173,11 @@ func (m *Model) handleStopwatchMsg(msg tea.Msg) tea.Cmd {
 }
 
 func (m *Model) handleConfirmTick() tea.Cmd {
-	if m.sessionState != ShowingConfirm {
+	if m.sessionState != ShowingConfirm && m.sessionState != RestCompleted {
 		return nil
 	}
 
-	// send tick every second to update idle time
+	// send tick every second to update idle/extra time
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
 		return confirmTickMsg{}
 	})
@@ -220,6 +227,16 @@ func (m *Model) handleCompletion() tea.Cmd {
 	ctx, cancel := context.WithTimeout(context.Background(), actions.CommandTimeout)
 	m.commandsCancel = cancel
 	m.commandsWg = actions.RunPostActions(ctx, m.currentTask)
+
+	if m.isRest() {
+		m.sessionState = RestCompleted
+		m.confirmStartTime = time.Now()
+
+		// send first tick to count up extra time after rest ends
+		return func() tea.Msg {
+			return confirmTickMsg{}
+		}
+	}
 
 	// continue after the completion according to config
 	switch m.onSessionEnd {
@@ -314,6 +331,11 @@ func (m *Model) startSession(taskType config.TaskType, task config.Task, isShort
 
 // records the current session into the session summary
 func (m *Model) recordSession() {
+	// rest sessions are standalone and not saved in the database
+	if m.isRest() {
+		return
+	}
+
 	// ignore very short or zero duration sessions
 	if m.elapsed < time.Second {
 		return

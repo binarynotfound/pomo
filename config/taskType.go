@@ -6,10 +6,11 @@ const (
 	WorkTask TaskType = iota
 	BreakTask
 	StopwatchTask
+	RestTask
 )
 
 func (t TaskType) GetTask() *Task {
-	if t == BreakTask {
+	if t == BreakTask || t == RestTask {
 		return &C.Break
 	}
 	return &C.Work

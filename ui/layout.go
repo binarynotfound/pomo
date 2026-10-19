@@ -38,7 +38,7 @@ func (m *Model) buildMainContent() string {
 	}
 
 	content := m.currentTask.Title
-	if m.isStopwatch() || !m.timer.Timedout() {
+	if m.isStopwatch() || m.sessionState == RestCompleted || !m.timer.Timedout() {
 		content += separator + timeLeft
 	}
 
@@ -46,13 +46,21 @@ func (m *Model) buildMainContent() string {
 }
 
 func (m *Model) buildStatusIndicators() string {
+	if m.sessionState == RestCompleted {
+		extra := time.Since(m.confirmStartTime).Truncate(time.Second)
+		if extra > 0 {
+			return separator + completedIndicator + fmt.Sprintf(" (+%s)", extra)
+		}
+		return separator + completedIndicator
+	}
+
 	if !m.isStopwatch() && m.timer.Timedout() {
 		return separator + completedIndicator
 	}
 
 	indicators := ""
 
-	if !m.isStopwatch() && m.longBreak.Enabled {
+	if !m.isStopwatch() && !m.isRest() && m.longBreak.Enabled {
 		indicators += fmt.Sprintf(" · %d/%d", m.cyclePosition, m.longBreak.After)
 	}
 
@@ -67,11 +75,13 @@ func (m *Model) buildProgressBar() string {
 	return "\n\n" + m.progressBar.View() + "\n"
 }
 
-// returns time left (or elapsed time in stopwatch mode) as a string in HH:MM:SS format
+// returns time left (or elapsed/extra time) as a string in HH:MM:SS format
 func (m *Model) buildTimeLeft() string {
 	left := m.timer.Timeout
 	if m.isStopwatch() {
 		left = m.elapsed
+	} else if m.sessionState == RestCompleted {
+		left = time.Since(m.confirmStartTime).Truncate(time.Second)
 	}
 	hours := int(left.Hours())
 	minutes := int(left.Minutes()) % 60
@@ -103,6 +113,9 @@ func (m *Model) buildTimeLeft() string {
 func (m *Model) buildHelpView() string {
 	if m.isStopwatch() {
 		return m.help.View(stopwatchKeyMap)
+	}
+	if m.isRest() {
+		return m.help.View(restKeyMap)
 	}
 	return m.help.View(keyMap)
 }

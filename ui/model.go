@@ -114,6 +114,7 @@ const (
 	Running SessionState = iota
 	Paused
 	ShowingConfirm
+	RestCompleted      // rest timer finished, counting up extra time
 	WaitingForCommands // waiting for post commands before quitting
 	Quitting
 )
@@ -124,4 +125,8 @@ func (m Model) GetSessionSummary() summary.SessionSummary {
 
 func (m Model) isStopwatch() bool {
 	return m.currentTaskType == config.StopwatchTask
+}
+
+func (m Model) isRest() bool {
+	return m.currentTaskType == config.RestTask
 }
