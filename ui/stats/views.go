@@ -373,3 +373,34 @@ func (m Model) renderDeleteConfirmView() string {
 		),
 	)
 }
+
+func (m Model) renderEditTitleView() string {
+	cursor := lipgloss.NewStyle().Foreground(colors.Purple).Render("█")
+	var inputLine string
+	if m.editValue == "" {
+		placeholder := dimTextStyle.Render("Enter session title...")
+		inputLine = "> " + cursor + placeholder
+	} else {
+		inputLine = "> " + m.editValue + cursor
+	}
+
+	dialog := confirmBorderStyle.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			lipgloss.NewStyle().Bold(true).Render(m.editPrompt),
+			"",
+			inputLine,
+		),
+	)
+
+	return lipgloss.Place(
+		m.width, m.height,
+		lipgloss.Center, lipgloss.Center,
+		lipgloss.JoinVertical(
+			lipgloss.Center,
+			dialog,
+			"",
+			m.help.View(EditTitleKeys),
+		),
+	)
+}

@@ -19,7 +19,8 @@ Navigate between views using Tab/Shift+Tab, ←/→ (h/l), or 1-4:
   4: By Date       - Sessions grouped by date
 
 Use ↑/↓ (k/j) to navigate saved data, Enter/Space to expand or collapse groups,
-and d to delete a session or group (with confirmation).`,
+e/r to add or change the name of a saved session or group, and d to delete a session
+or group (with confirmation).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		m := stats.New()
 		p := tea.NewProgram(m, tea.WithAltScreen())

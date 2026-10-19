@@ -4,6 +4,7 @@ package stats
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Bahaaio/pomo/db"
@@ -52,6 +53,10 @@ type Model struct {
 	confirmDeleteYes bool
 	deleteTargetIDs  []int
 	deletePrompt     string
+	editingTitle     bool
+	editTargetIDs    []int
+	editPrompt       string
+	editValue        string
 
 	// state
 	width, height int
@@ -152,6 +157,23 @@ func deleteSessionsCmd(ids []int) tea.Cmd {
 	}
 }
 
+func updateSessionsTitleCmd(ids []int, title string) tea.Cmd {
+	return func() tea.Msg {
+		database, err := db.Connect()
+		if err != nil {
+			return errMsg{err: errors.New("failed to connect to the database")}
+		}
+		defer database.Close()
+
+		repo := db.NewSessionRepo(database)
+		if err := repo.UpdateSessionsTitle(ids, title); err != nil {
+			return errMsg{err: errors.New("failed to update session title")}
+		}
+
+		return fetchStats()
+	}
+}
+
 func (m Model) Init() tea.Cmd {
 	return fetchStats
 }
@@ -167,6 +189,10 @@ func (m Model) View() string {
 
 	if m.confirmingDelete {
 		return m.renderDeleteConfirmView()
+	}
+
+	if m.editingTitle {
+		return m.renderEditTitleView()
 	}
 
 	tabs := m.renderTabs()
@@ -297,6 +323,10 @@ func (m Model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleDeleteConfirmKeys(msg)
 	}
 
+	if m.editingTitle {
+		return m.handleEditTitleKeys(msg)
+	}
+
 	switch {
 	case key.Matches(msg, Keys.Quit):
 		m.quitting = true
@@ -374,6 +404,45 @@ func (m Model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case key.Matches(msg, Keys.Edit):
+		if m.activeTab != TabOverview {
+			items := m.buildItems()
+			if m.cursor >= 0 && m.cursor < len(items) {
+				item := items[m.cursor]
+				if item.kind == itemSession {
+					s := item.session
+					m.editTargetIDs = []int{s.ID}
+					m.editPrompt = fmt.Sprintf(
+						"Session name (%s on %s):",
+						s.Duration.Round(time.Second),
+						s.FormattedDateTime(),
+					)
+					initial := s.Title
+					if initial == "work session" || initial == "break session" {
+						initial = ""
+					}
+					m.editValue = initial
+					m.editingTitle = true
+					return m, nil
+				} else if m.activeTab == TabByTitle {
+					m.editTargetIDs = item.sessionIDs
+					m.editPrompt = fmt.Sprintf(
+						"Rename all %d session(s) in %q:",
+						len(item.sessionIDs),
+						item.groupLabel,
+					)
+					initial := item.groupLabel
+					if initial == "work session" || initial == "break session" {
+						initial = ""
+					}
+					m.editValue = initial
+					m.editingTitle = true
+					return m, nil
+				}
+			}
+		}
+		return m, nil
+
 	case key.Matches(msg, Keys.Delete):
 		if m.activeTab != TabOverview {
 			items := m.buildItems()
@@ -401,6 +470,43 @@ func (m Model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.confirmDeleteYes = true
 			}
 		}
+		return m, nil
+	}
+
+	return m, nil
+}
+
+func (m Model) handleEditTitleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEnter:
+		ids := m.editTargetIDs
+		newTitle := strings.TrimSpace(m.editValue)
+		m.editingTitle = false
+		m.editTargetIDs = nil
+		return m, updateSessionsTitleCmd(ids, newTitle)
+
+	case tea.KeyEsc, tea.KeyCtrlC:
+		m.editingTitle = false
+		m.editTargetIDs = nil
+		return m, nil
+
+	case tea.KeyBackspace, tea.KeyDelete:
+		runes := []rune(m.editValue)
+		if len(runes) > 0 {
+			m.editValue = string(runes[:len(runes)-1])
+		}
+		return m, nil
+
+	case tea.KeyCtrlU:
+		m.editValue = ""
+		return m, nil
+
+	case tea.KeySpace:
+		m.editValue += " "
+		return m, nil
+
+	case tea.KeyRunes:
+		m.editValue += string(msg.Runes)
 		return m, nil
 	}
 

@@ -50,6 +50,19 @@ func TestSessionRepoWithTitleAndDeletion(t *testing.T) {
 	assert.Equal(t, "write report", sessions[2].Title)
 	assert.Equal(t, "2026-10-18 09:00:00", sessions[2].FormattedDateTime())
 
+	// Update single session title
+	require.NoError(t, repo.UpdateSessionTitle(sessions[1].ID, "architecture doc"))
+	updatedSessions, err := repo.GetAllSessions()
+	require.NoError(t, err)
+	assert.Equal(t, "architecture doc", updatedSessions[1].Title)
+
+	// Update multiple sessions title
+	require.NoError(t, repo.UpdateSessionsTitle([]int{sessions[0].ID, sessions[2].ID}, "final report"))
+	updatedSessions, err = repo.GetAllSessions()
+	require.NoError(t, err)
+	assert.Equal(t, "final report", updatedSessions[0].Title)
+	assert.Equal(t, "final report", updatedSessions[2].Title)
+
 	// Delete middle session
 	require.NoError(t, repo.DeleteSession(sessions[1].ID))
 	remaining, err := repo.GetAllSessions()
@@ -145,6 +158,26 @@ func TestStatsViewsAndNavigation(t *testing.T) {
 	m = updated.(Model)
 	assert.False(t, m.confirmingDelete)
 	assert.Nil(t, m.deleteTargetIDs)
+
+	// Press 'e' on selected session to edit its title
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m = updated.(Model)
+	assert.True(t, m.editingTitle)
+	assert.Equal(t, []int{3}, m.editTargetIDs)
+	assert.Equal(t, "write report", m.editValue)
+	assert.Contains(t, m.View(), "Session name")
+
+	// Clear and type new title
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlU})
+	m = updated.(Model)
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("new task")})
+	m = updated.(Model)
+	assert.Equal(t, "new task", m.editValue)
+
+	// Cancel edit with Esc
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+	assert.False(t, m.editingTitle)
 }
 
 func TestOverviewBarChartByTitle(t *testing.T) {

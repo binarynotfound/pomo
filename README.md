@@ -289,6 +289,7 @@ work:
 | `1` - `4`                | Jump directly to view 1–4                         |
 | `↑` / `k`, `↓` / `j`     | Navigate saved sessions and groups                |
 | `Enter` / `Space`        | Expand/collapse group (in `By Title` / `By Date`) |
+| `e` / `r`                | Add or change the name of a saved session/group   |
 | `d` / `x` / `Delete`     | Delete selected session or group (asks confirm)   |
 | `q` / `Ctrl+C`           | Quit                                              |
 

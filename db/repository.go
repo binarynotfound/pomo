@@ -77,6 +77,28 @@ func (r *SessionRepo) DeleteSessionsByIDs(ids []int) error {
 	return err
 }
 
+// UpdateSessionTitle updates the title of a single session by its ID.
+func (r *SessionRepo) UpdateSessionTitle(id int, title string) error {
+	_, err := r.db.Exec("UPDATE sessions SET title = ? WHERE id = ?;", title, id)
+	return err
+}
+
+// UpdateSessionsTitle updates the title of multiple sessions by their IDs.
+func (r *SessionRepo) UpdateSessionsTitle(ids []int, title string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	query, args, err := sqlx.In("UPDATE sessions SET title = ? WHERE id IN (?);", title, ids)
+	if err != nil {
+		return err
+	}
+
+	query = r.db.Rebind(query)
+	_, err = r.db.Exec(query, args...)
+	return err
+}
+
 // GetAllTimeStats retrieves aggregate statistics across all sessions.
 func (r *SessionRepo) GetAllTimeStats() (AllTimeStats, error) {
 	var totalStats AllTimeStats

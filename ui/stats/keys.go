@@ -12,6 +12,7 @@ type KeyMap struct {
 	Up      key.Binding
 	Down    key.Binding
 	Toggle  key.Binding
+	Edit    key.Binding
 	Delete  key.Binding
 	Confirm key.Binding
 	Cancel  key.Binding
@@ -24,6 +25,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 		k.Up,
 		k.Down,
 		k.Toggle,
+		k.Edit,
 		k.Delete,
 		k.Quit,
 	}
@@ -67,6 +69,10 @@ var Keys = KeyMap{
 		key.WithKeys("enter", " "),
 		key.WithHelp("enter", "expand/collapse"),
 	),
+	Edit: key.NewBinding(
+		key.WithKeys("e", "r"),
+		key.WithHelp("e", "rename"),
+	),
 	Delete: key.NewBinding(
 		key.WithKeys("d", "x", "delete", "backspace"),
 		key.WithHelp("d", "delete"),
@@ -104,6 +110,7 @@ var SessionsKeys = KeyMap{
 	NextTab: Keys.NextTab,
 	Up:      Keys.Up,
 	Down:    Keys.Down,
+	Edit:    Keys.Edit,
 	Delete:  Keys.Delete,
 	Quit:    Keys.Quit,
 }
@@ -113,6 +120,7 @@ var GroupedKeys = KeyMap{
 	Up:      Keys.Up,
 	Down:    Keys.Down,
 	Toggle:  Keys.Toggle,
+	Edit:    Keys.Edit,
 	Delete:  Keys.Delete,
 	Quit:    Keys.Quit,
 }
@@ -129,4 +137,15 @@ var ConfirmDeleteKeys = KeyMap{
 		key.WithHelp("enter", "submit"),
 	),
 	Quit: Keys.Quit,
+}
+
+var EditTitleKeys = KeyMap{
+	Toggle: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "save"),
+	),
+	Cancel: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "cancel"),
+	),
 }
