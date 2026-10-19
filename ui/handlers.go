@@ -12,6 +12,7 @@ import (
 	"github.com/Bahaaio/pomo/ui/confirm"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/stopwatch"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -38,10 +39,22 @@ func (m *Model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 
 	switch {
 	case key.Matches(msg, keyMap.Increase):
+		if m.isStopwatch() {
+			return nil
+		}
 		m.duration += time.Minute
 		return m.updateProgressBar()
 
 	case key.Matches(msg, keyMap.Pause):
+		if m.isStopwatch() {
+			if m.sessionState == Paused {
+				m.sessionState = Running
+				return m.stopwatch.Start()
+			}
+			m.sessionState = Paused
+			return m.stopwatch.Stop()
+		}
+
 		if m.sessionState == Paused {
 			m.sessionState = Running
 		} else if m.getPercent() != 1.0 { // prevent pausing if session is already completed
@@ -56,10 +69,16 @@ func (m *Model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 
 	case key.Matches(msg, keyMap.Reset):
 		m.elapsed = 0
+		if m.isStopwatch() {
+			return m.stopwatch.Reset()
+		}
 		m.duration = m.currentTask.Duration
 		return m.updateProgressBar()
 
 	case key.Matches(msg, keyMap.Skip):
+		if m.isStopwatch() {
+			return nil
+		}
 		m.recordSession()
 		return m.nextSession()
 
@@ -119,6 +138,31 @@ func (m *Model) handleTimerTick(msg timer.TickMsg) tea.Cmd {
 	cmds = append(cmds, m.progressBar.SetPercent(percent))
 
 	return tea.Batch(cmds...)
+}
+
+func (m *Model) handleStopwatchTick(msg stopwatch.TickMsg) tea.Cmd {
+	if m.sessionState == Paused {
+		return nil
+	}
+
+	var cmd tea.Cmd
+	m.stopwatch, cmd = m.stopwatch.Update(msg)
+
+	if cmd == nil {
+		log.Println("stopwatch tick rejected, ignoring")
+		return nil
+	}
+
+	m.elapsed = m.stopwatch.Elapsed()
+
+	return cmd
+}
+
+func (m *Model) handleStopwatchMsg(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	m.stopwatch, cmd = m.stopwatch.Update(msg)
+
+	return cmd
 }
 
 func (m *Model) handleConfirmTick() tea.Cmd {

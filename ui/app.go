@@ -4,12 +4,16 @@ package ui
 import (
 	"github.com/Bahaaio/pomo/ui/confirm"
 	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/stopwatch"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) Init() tea.Cmd {
+	if m.isStopwatch() {
+		return m.stopwatch.Init()
+	}
 	return m.timer.Init()
 }
 
@@ -23,6 +27,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case timer.TickMsg:
 		return m, m.handleTimerTick(msg)
+
+	case stopwatch.TickMsg:
+		return m, m.handleStopwatchTick(msg)
+
+	case stopwatch.StartStopMsg, stopwatch.ResetMsg:
+		return m, m.handleStopwatchMsg(msg)
 
 	case confirmTickMsg:
 		return m, m.handleConfirmTick()
@@ -60,7 +70,11 @@ func (m Model) View() string {
 
 	content := m.buildMainContent()
 	content += m.buildStatusIndicators()
-	content += m.buildProgressBar()
+	if !m.isStopwatch() {
+		content += m.buildProgressBar()
+	} else {
+		content += "\n"
+	}
 
 	help := m.buildHelpView()
 

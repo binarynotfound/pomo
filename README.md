@@ -10,6 +10,7 @@ A simple, customizable Pomodoro timer for your terminal, built with [Bubble Tea]
 ## Features
 
 - 🍅 Work and break timer sessions
+- ⏱️ Stopwatch mode for open-ended work sessions
 - 🔄 Pomodoro cycles with long break
 - 🔗 Task chaining with user confirmation prompts
 - 📊 Real-time progress bar visualization
@@ -69,6 +70,13 @@ pomo                    # work session
 pomo 30m                # 30m work session
 pomo 45m 15m            # 45m work with 15m break
 pomo -t "write report"  # work session with custom title (or --title)
+```
+
+Stopwatch sessions:
+
+```bash
+pomo stopwatch                  # stopwatch session
+pomo stopwatch -t "deep work"   # stopwatch session with custom title (or --title)
 ```
 
 Break sessions:

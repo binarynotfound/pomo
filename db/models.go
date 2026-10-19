@@ -46,8 +46,8 @@ const (
 )
 
 func GetSessionType(taskType config.TaskType) SessionType {
-	if taskType == config.WorkTask {
-		return WorkSession
+	if taskType == config.BreakTask {
+		return BreakSession
 	}
-	return BreakSession
+	return WorkSession
 }

@@ -5,6 +5,7 @@ type TaskType int
 const (
 	WorkTask TaskType = iota
 	BreakTask
+	StopwatchTask
 )
 
 func (t TaskType) GetTask() *Task {

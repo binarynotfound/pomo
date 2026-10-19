@@ -38,7 +38,7 @@ func (m *Model) buildMainContent() string {
 	}
 
 	content := m.currentTask.Title
-	if !m.timer.Timedout() {
+	if m.isStopwatch() || !m.timer.Timedout() {
 		content += separator + timeLeft
 	}
 
@@ -46,13 +46,13 @@ func (m *Model) buildMainContent() string {
 }
 
 func (m *Model) buildStatusIndicators() string {
-	if m.timer.Timedout() {
+	if !m.isStopwatch() && m.timer.Timedout() {
 		return separator + completedIndicator
 	}
 
 	indicators := ""
 
-	if m.longBreak.Enabled {
+	if !m.isStopwatch() && m.longBreak.Enabled {
 		indicators += fmt.Sprintf(" · %d/%d", m.cyclePosition, m.longBreak.After)
 	}
 
@@ -67,9 +67,12 @@ func (m *Model) buildProgressBar() string {
 	return "\n\n" + m.progressBar.View() + "\n"
 }
 
-// returns time left as a string in HH:MM:SS format
+// returns time left (or elapsed time in stopwatch mode) as a string in HH:MM:SS format
 func (m *Model) buildTimeLeft() string {
 	left := m.timer.Timeout
+	if m.isStopwatch() {
+		left = m.elapsed
+	}
 	hours := int(left.Hours())
 	minutes := int(left.Minutes()) % 60
 	seconds := int(left.Seconds()) % 60
@@ -98,6 +101,9 @@ func (m *Model) buildTimeLeft() string {
 }
 
 func (m *Model) buildHelpView() string {
+	if m.isStopwatch() {
+		return m.help.View(stopwatchKeyMap)
+	}
 	return m.help.View(keyMap)
 }
 

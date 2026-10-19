@@ -48,3 +48,9 @@ var keyMap = KeyMap{
 		key.WithHelp("q", "quit"),
 	),
 }
+
+var stopwatchKeyMap = KeyMap{
+	Pause: keyMap.Pause,
+	Reset: keyMap.Reset,
+	Quit:  keyMap.Quit,
+}

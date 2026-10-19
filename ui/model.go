@@ -14,6 +14,7 @@ import (
 	"github.com/Bahaaio/pomo/ui/summary"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/stopwatch"
 	"github.com/charmbracelet/bubbles/timer"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -25,9 +26,10 @@ type Model struct {
 	help          help.Model
 
 	// timer
-	timer    timer.Model
-	duration time.Duration
-	elapsed  time.Duration
+	timer     timer.Model
+	stopwatch stopwatch.Model
+	duration  time.Duration
+	elapsed   time.Duration
 
 	// state
 	width, height    int // window dimensions
@@ -86,8 +88,9 @@ func NewModel(taskType config.TaskType, cfg config.Config) Model {
 		confirmDialog: confirm.New(),
 		help:          help.New(),
 
-		timer:    timer.New(task.Duration),
-		duration: task.Duration,
+		timer:     timer.New(task.Duration),
+		stopwatch: stopwatch.New(),
+		duration:  task.Duration,
 
 		onSessionEnd:    cfg.OnSessionEnd,
 		sessionState:    Running,
@@ -117,4 +120,8 @@ const (
 
 func (m Model) GetSessionSummary() summary.SessionSummary {
 	return m.sessionSummary
+}
+
+func (m Model) isStopwatch() bool {
+	return m.currentTaskType == config.StopwatchTask
 }
