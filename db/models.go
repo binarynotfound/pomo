@@ -10,6 +10,7 @@ var schema = `
 CREATE TABLE IF NOT EXISTS sessions(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	type TEXT NOT NULL,
+	title TEXT NOT NULL DEFAULT '',
 	duration INTEGER NOT NULL,
 	started_at TEXT NOT NULL
 );
@@ -18,8 +19,56 @@ CREATE TABLE IF NOT EXISTS sessions(
 type Session struct {
 	ID        int           `db:"id"`
 	Type      string        `db:"type"`
+	Title     string        `db:"title"`
 	Duration  time.Duration `db:"duration"`
-	StartedAt time.Time     `db:"started_at"`
+	StartedAt string        `db:"started_at"`
+}
+
+func (s Session) ParsedTime() time.Time {
+	if t, err := time.Parse(time.RFC3339, s.StartedAt); err == nil {
+		return t
+	}
+	if t, err := time.Parse("2006-01-02 15:04:05", s.StartedAt); err == nil {
+		return t
+	}
+	if t, err := time.Parse(DateFormat, s.StartedAt); err == nil {
+		return t
+	}
+	return time.Time{}
+}
+
+func (s Session) FormattedDateTime() string {
+	t := s.ParsedTime()
+	if t.IsZero() {
+		return s.StartedAt
+	}
+	return t.Format("2006-01-02 15:04:05")
+}
+
+func (s Session) FormattedDate() string {
+	t := s.ParsedTime()
+	if t.IsZero() {
+		if len(s.StartedAt) >= 10 {
+			return s.StartedAt[:10]
+		}
+		return s.StartedAt
+	}
+	return t.Format(DateFormat)
+}
+
+func (s Session) FormattedTime() string {
+	t := s.ParsedTime()
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("15:04:05")
+}
+
+func (s Session) DisplayTitle() string {
+	if s.Title != "" {
+		return s.Title
+	}
+	return s.Type + " session"
 }
 
 type AllTimeStats struct {

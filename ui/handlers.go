@@ -358,6 +358,7 @@ func (m *Model) recordSession() {
 		time.Now(),
 		m.elapsed,
 		db.GetSessionType(m.currentTaskType),
+		m.currentTask.Title,
 	); err != nil {
 		log.Printf("failed to record session: %v", err)
 	}

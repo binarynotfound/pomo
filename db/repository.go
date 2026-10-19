@@ -17,19 +17,64 @@ func NewSessionRepo(db *sqlx.DB) *SessionRepo {
 }
 
 // CreateSession inserts a new session record into the database.
-func (r *SessionRepo) CreateSession(startedAt time.Time, duration time.Duration, sessionType SessionType) error {
+func (r *SessionRepo) CreateSession(startedAt time.Time, duration time.Duration, sessionType SessionType, titles ...string) error {
 	startedAtStr := startedAt.Format(time.RFC3339)
+	title := ""
+	if len(titles) > 0 {
+		title = titles[0]
+	}
 
 	if _, err := r.db.Exec(
-		"insert into sessions (started_at, duration, type) values (?, ?, ?);",
+		"insert into sessions (started_at, duration, type, title) values (?, ?, ?, ?);",
 		startedAtStr,
 		duration,
 		sessionType,
+		title,
 	); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// GetAllSessions retrieves all saved sessions ordered by date and time (newest first).
+func (r *SessionRepo) GetAllSessions() ([]Session, error) {
+	var sessions []Session
+
+	if err := r.db.Select(
+		&sessions,
+		`
+		SELECT id, type, COALESCE(title, '') AS title, duration, started_at
+		FROM sessions
+		ORDER BY datetime(started_at) DESC, id DESC;
+		`,
+	); err != nil {
+		return nil, err
+	}
+
+	return sessions, nil
+}
+
+// DeleteSession deletes a session by its ID.
+func (r *SessionRepo) DeleteSession(id int) error {
+	_, err := r.db.Exec("DELETE FROM sessions WHERE id = ?;", id)
+	return err
+}
+
+// DeleteSessionsByIDs deletes multiple sessions by their IDs.
+func (r *SessionRepo) DeleteSessionsByIDs(ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	query, args, err := sqlx.In("DELETE FROM sessions WHERE id IN (?);", ids)
+	if err != nil {
+		return err
+	}
+
+	query = r.db.Rebind(query)
+	_, err = r.db.Exec(query, args...)
+	return err
 }
 
 // GetAllTimeStats retrieves aggregate statistics across all sessions.

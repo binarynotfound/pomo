@@ -62,6 +62,10 @@ func createSchema(db *sqlx.DB) error {
 	if _, err := db.Exec(schema); err != nil {
 		return err
 	}
+
+	// Ensure existing databases have the 'title' column
+	_, _ = db.Exec(`ALTER TABLE sessions ADD COLUMN title TEXT NOT NULL DEFAULT '';`)
+
 	log.Println("created the schema")
 
 	return nil

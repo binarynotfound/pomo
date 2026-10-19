@@ -23,11 +23,13 @@ A simple, customizable Pomodoro timer for your terminal, built with [Bubble Tea]
 
 ### Statistics
 
-Track your productivity with `pomo stats`:
+Track and manage your productivity with `pomo stats`:
 
-- **Duration ratio** — total work vs break time
-- **Weekly bar chart** — daily work hours for the past 7 days
-- **4-month heatmap** — GitHub-style activity visualization
+- **Overview** — duration ratio (work vs break), streaks, weekly bar chart, and 4-month heatmap
+- **Sessions** — browse all saved sessions with exact registration date and time
+- **Group by Title (`-t`)** — group saved sessions by custom task title, ordered by date and hour
+- **Group by Date** — group saved sessions by date with daily work/break totals
+- **Session management** — navigate saved sessions or groups and delete them with confirmation
 
 > Heatmap icons require a [Nerd Font](https://www.nerdfonts.com/)
 
@@ -277,6 +279,18 @@ work:
 | `q` / `Ctrl+C` | Quit                            |
 
 > Short sessions extend the current session by 2 minutes, useful when you need a bit more time
+
+#### Statistics Controls (`pomo stats`)
+
+| Key                      | Action                                            |
+| ------------------------ | ------------------------------------------------- |
+| `Tab` / `→` / `l`        | Next view (`Overview`, `Sessions`, `By Title`, `By Date`) |
+| `Shift+Tab` / `←` / `h`  | Previous view                                     |
+| `1` - `4`                | Jump directly to view 1–4                         |
+| `↑` / `k`, `↓` / `j`     | Navigate saved sessions and groups                |
+| `Enter` / `Space`        | Expand/collapse group (in `By Title` / `By Date`) |
+| `d` / `x` / `Delete`     | Delete selected session or group (asks confirm)   |
+| `q` / `Ctrl+C`           | Quit                                              |
 
 ## License
 
