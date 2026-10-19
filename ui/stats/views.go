@@ -286,12 +286,11 @@ func (m Model) formatItemRow(item selectableItem, selected bool) string {
 			)
 		} else {
 			summary = fmt.Sprintf(
-				"%s %s  (%d sessions · work: %s · break: %s)",
+				"%s %s  (%d sessions · %s)",
 				arrow,
 				item.groupLabel,
 				len(item.sessionIDs),
 				item.workDur.Round(time.Second),
-				item.breakDur.Round(time.Second),
 			)
 		}
 

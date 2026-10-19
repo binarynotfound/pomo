@@ -37,7 +37,7 @@ func (r *SessionRepo) CreateSession(startedAt time.Time, duration time.Duration,
 	return nil
 }
 
-// GetAllSessions retrieves all saved sessions ordered by date and time (newest first).
+// GetAllSessions retrieves all saved work sessions ordered by date and time (newest first).
 func (r *SessionRepo) GetAllSessions() ([]Session, error) {
 	var sessions []Session
 
@@ -46,6 +46,7 @@ func (r *SessionRepo) GetAllSessions() ([]Session, error) {
 		`
 		SELECT id, type, COALESCE(title, '') AS title, duration, started_at
 		FROM sessions
+		WHERE type = 'work'
 		ORDER BY datetime(started_at) DESC, id DESC;
 		`,
 	); err != nil {

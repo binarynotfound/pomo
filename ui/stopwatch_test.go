@@ -7,7 +7,10 @@ import (
 	"github.com/binarynotfound/pomo/config"
 	"github.com/binarynotfound/pomo/db"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	_ "modernc.org/sqlite"
 )
 
 func TestStopwatchModel(t *testing.T) {
@@ -166,4 +169,56 @@ func TestRestModel(t *testing.T) {
 	}
 	assert.Equal(t, Running, m.sessionState)
 	assert.Equal(t, time.Duration(0), m.elapsed)
+}
+
+func TestOnlyWorkSessionsSavedToDB(t *testing.T) {
+	database, err := sqlx.Open("sqlite", ":memory:")
+	require.NoError(t, err)
+	defer database.Close()
+
+	_, err = database.Exec(`
+		CREATE TABLE IF NOT EXISTS sessions(
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			type TEXT NOT NULL,
+			title TEXT NOT NULL DEFAULT '',
+			duration INTEGER NOT NULL,
+			started_at TEXT NOT NULL
+		);
+	`)
+	require.NoError(t, err)
+
+	repo := db.NewSessionRepo(database)
+
+	cfg := config.Config{
+		Work: config.Task{
+			Title:    "work session",
+			Duration: 25 * time.Minute,
+		},
+		Break: config.Task{
+			Title:    "break session",
+			Duration: 5 * time.Minute,
+		},
+	}
+	config.C = cfg
+
+	// Break session in pomodoro mode should NOT be saved to DB
+	breakModel := NewModel(config.BreakTask, cfg)
+	breakModel.repo = repo
+	breakModel.elapsed = 5 * time.Minute
+	breakModel.recordSession()
+
+	sessions, err := repo.GetAllSessions()
+	require.NoError(t, err)
+	assert.Empty(t, sessions)
+
+	// Work session in pomodoro mode SHOULD be saved to DB
+	workModel := NewModel(config.WorkTask, cfg)
+	workModel.repo = repo
+	workModel.elapsed = 25 * time.Minute
+	workModel.recordSession()
+
+	sessions, err = repo.GetAllSessions()
+	require.NoError(t, err)
+	require.Len(t, sessions, 1)
+	assert.Equal(t, "work", sessions[0].Type)
 }

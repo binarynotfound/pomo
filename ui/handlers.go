@@ -401,6 +401,11 @@ func (m *Model) recordSession() {
 
 	m.sessionSummary.AddSession(m.currentTaskType, m.elapsed)
 
+	// only store work sessions in the database
+	if db.GetSessionType(m.currentTaskType) != db.WorkSession {
+		return
+	}
+
 	// return if no database is configured
 	if m.repo == nil {
 		return
