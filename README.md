@@ -250,6 +250,14 @@ work:
 
 > Skip button skips directly to the next session, bypassing any prompts
 
+#### Stopwatch Controls
+
+| Key            | Action                       |
+| -------------- | ---------------------------- |
+| `Space`        | Pause/Resume stopwatch       |
+| `←` / `h`      | Reset elapsed time to 00:00  |
+| `q` / `Ctrl+C` | Quit and record work session |
+
 #### Confirmation Dialog
 
 | Key            | Action                          |

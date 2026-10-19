@@ -10,6 +10,10 @@ import (
 var stopwatchCmd = &cobra.Command{
 	Use:   "stopwatch",
 	Short: "Start a stopwatch session",
+	Long: `Start an open-ended count-up stopwatch work session.
+
+Elapsed time is recorded as a work session in your statistics database
+and displayed in the session summary when you quit.`,
 	Example: `  pomo stopwatch                  # Start a stopwatch session
   pomo stopwatch -t "deep work"   # Start stopwatch session with custom title`,
 
